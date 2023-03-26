@@ -47,7 +47,7 @@ func AddBook(c *gin.Context) {
 	}
 	defer cancel()
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusCreated, result)
 }
 
 func GetBooks(c *gin.Context) {

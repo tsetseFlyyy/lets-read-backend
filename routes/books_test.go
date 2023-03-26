@@ -1,32 +1,20 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	//"fmt"
 	"net/http"
 	"net/http/httptest"
+	"server/models"
 	"testing"
-	//"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
 func SetUpRouter() *gin.Engine {
 	router := gin.Default()
 	return router
-}
-
-type Book struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Title       string             `bson:"title,omitempty"`
-	Author      string             `bson:"author"`
-	FriendsBook bool               `bson:"friendsbook"`
-	Surname     string             `bson:"surname"`
-	Name        string             `bson:"name"`
-	Patronymic  string             `bson:"patronymic"`
-	Deadline    string             `bson:"deadline"`
-	Notes       []string           `bson:"notes,omitempty"`
 }
 
 func TestHandler_getBooks(t *testing.T) {
@@ -36,11 +24,33 @@ func TestHandler_getBooks(t *testing.T) {
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	var books []Book
+	var books []models.Book
 	json.Unmarshal(w.Body.Bytes(), &books)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotEmpty(t, books)
+}
+
+func TestHandler_addBook(t *testing.T) {
+	r := SetUpRouter()
+	r.POST("/books", AddBook)
+	book := models.Book{
+		Title: "book from test1",
+		Author: "test",
+		FriendsBook: false,
+		
+	}
+	jsonValue, _ := json.Marshal(book)
+	req, _ := http.NewRequest("POST", "/books", bytes.NewBuffer(jsonValue))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+}
+
+func TestHandler_deleteBook(t *testing.T) {
+	r := SetUpRouter()
+	r.DELETE("/books/:id")
 }
 
 //func TestDBInstance(t *testing.T) {
