@@ -13,7 +13,8 @@ import (
 // DBinstance func
 func DBinstance() *mongo.Client {
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://shalkar:mongopassword@library.ysxfojs.mongodb.net/?retryWrites=true&w=majority"))
+	//client, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://shalkar:mongopassword@library.ysxfojs.mongodb.net/?retryWrites=true&w=majority"))
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:"))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	//"encoding/json"
 	"fmt"
 	"net/http"
 	"server/models"
@@ -40,7 +39,6 @@ func AddBook(c *gin.Context) {
 	book.ID = primitive.NewObjectID()
 
 	result, insertErr := orderCollection.InsertOne(ctx, book)
-	//result, insertErr := orderCollection.InsertOne(ctx, bson.D{{"Title", "Test"}, {"Author", "Golang"}, {"FriendsBook", false}, {"Surname": "Test"}, {"Name": "Chelov"}, {"Patronymic": ""}, {"Deadline": ""}, {"Notes": []string{"geek"}}})
 	if insertErr != nil {
 		msg := fmt.Sprintf("order item was not created")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
@@ -73,8 +71,6 @@ func GetBooks(c *gin.Context) {
 	}
 
 	defer cancel()
-
-	//fmt.Println(books)
 
 	c.JSON(http.StatusOK, books)
 }

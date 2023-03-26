@@ -23,8 +23,8 @@ func main() {
 
 	router.Use(cors.Default())
 
-	router.GET("", func(ctx *gin.Context) {
-		ctx.IndentedJSON(http.StatusOK, gin.H{"message": "Connection is ok!"})
+	router.GET("", func(c *gin.Context) {
+		c.IndentedJSON(http.StatusOK, gin.H{"message": "Connection is ok!"})
 	})
 	router.GET("/books", routes.GetBooks)
 	router.POST("/books", routes.AddBook)
