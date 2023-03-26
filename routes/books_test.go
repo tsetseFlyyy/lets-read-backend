@@ -35,10 +35,9 @@ func TestHandler_addBook(t *testing.T) {
 	r := SetUpRouter()
 	r.POST("/books", AddBook)
 	book := models.Book{
-		Title: "book from test1",
-		Author: "test",
+		Title:       "book from test1",
+		Author:      "test",
 		FriendsBook: false,
-		
 	}
 	jsonValue, _ := json.Marshal(book)
 	req, _ := http.NewRequest("POST", "/books", bytes.NewBuffer(jsonValue))
@@ -50,7 +49,44 @@ func TestHandler_addBook(t *testing.T) {
 
 func TestHandler_deleteBook(t *testing.T) {
 	r := SetUpRouter()
-	r.DELETE("/books/:id")
+	r.DELETE("/books/:id", DeleteBook)
+	bookID := "64205d98ac897889b1869bee"
+	req, _ := http.NewRequest("DELETE", "/books/"+bookID, nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestHandler_updateBook(t *testing.T) {
+	r := SetUpRouter()
+	r.PUT("/books/:id", UpdateBook)
+	bookID := "undefined"
+	book := models.Book{
+		Surname:    "Familiya",
+		Name:       "Imya",
+		Patronymic: "Otchestvo",
+		Deadline:   "2023-10-10",
+	}
+	jsonValue, _ := json.Marshal(book)
+	req, _ := http.NewRequest("PUT", "/books/"+bookID, bytes.NewBuffer(jsonValue))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestHandler_updateNotes(t *testing.T) {
+	r := SetUpRouter()
+	r.PUT("/books/notes/:id", UpdateNotes)
+	bookID := "6401b0860dc4ba373bbdf98f"
+	note := models.Note{
+		Not: "note from test",
+	}
+	jsonValue, _ := json.Marshal(note)
+	req, _ := http.NewRequest("PUT", "/books/notes/"+bookID, bytes.NewBuffer(jsonValue))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
 }
 
 //func TestDBInstance(t *testing.T) {
