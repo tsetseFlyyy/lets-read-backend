@@ -16,7 +16,7 @@ import (
 
 var validate = validator.New()
 
-var orderCollection *mongo.Collection = OpenCollection(Client, "books")
+var booksCollection *mongo.Collection = OpenCollection(Client, "books")
 
 func AddBook(c *gin.Context) {
 
@@ -29,18 +29,24 @@ func AddBook(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
-
 	validationErr := validate.Struct(book)
+	fmt.Println(book.Name)
 	if validationErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
 		fmt.Println(validationErr)
 		return
 	}
+
+	if book.Title == "" && book.Author == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Title and Author properties are empty"})
+		return
+	}
+
 	book.ID = primitive.NewObjectID()
 
-	result, insertErr := orderCollection.InsertOne(ctx, book)
+	result, insertErr := booksCollection.InsertOne(ctx, book)
 	if insertErr != nil {
-		msg := fmt.Sprintf("order item was not created")
+		msg := fmt.Sprintf("book item was not created")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 		fmt.Println(insertErr)
 		return
@@ -56,7 +62,7 @@ func GetBooks(c *gin.Context) {
 
 	var books []bson.M
 
-	cursor, err := orderCollection.Find(ctx, bson.M{})
+	cursor, err := booksCollection.Find(ctx, bson.M{})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -77,31 +83,31 @@ func GetBooks(c *gin.Context) {
 
 func UpdateBook(c *gin.Context) {
 
-	orderID := c.Params.ByName("id")
-	docID, _ := primitive.ObjectIDFromHex(orderID)
+	bookID := c.Params.ByName("id")
+	docID, _ := primitive.ObjectIDFromHex(bookID)
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
-	var order models.Book
+	var book models.Book
 
-	if err := c.BindJSON(&order); err != nil {
+	if err := c.BindJSON(&book); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		fmt.Println(err)
 		return
 	}
 
-	validationErr := validate.Struct(order)
+	validationErr := validate.Struct(book)
 	if validationErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
 		fmt.Println(validationErr)
 		return
 	}
 
-	result, err := orderCollection.UpdateOne(
+	result, err := booksCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": docID},
 		bson.D{
-			{"$set", bson.M{"surname": order.Surname, "name": order.Name, "patronymic": order.Patronymic, "deadline": order.Deadline}},
+			{"$set", bson.M{"surname": book.Surname, "name": book.Name, "patronymic": book.Patronymic, "deadline": book.Deadline}},
 		},
 	)
 
@@ -113,37 +119,41 @@ func UpdateBook(c *gin.Context) {
 
 	defer cancel()
 
-	c.JSON(http.StatusOK, result.ModifiedCount)
+	if result.ModifiedCount == 0 {
+		c.JSON(http.StatusInternalServerError, result.ModifiedCount)
+	} else if result.ModifiedCount == 1 {
+		c.JSON(http.StatusOK, result.ModifiedCount)
+	}
 }
 
 func UpdateNotes(c *gin.Context) {
-	orderID := c.Params.ByName("id")
-	docID, _ := primitive.ObjectIDFromHex(orderID)
+	bookID := c.Params.ByName("id")
+	docID, _ := primitive.ObjectIDFromHex(bookID)
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
-	var order models.Note
+	var book models.Note
 
-	if err := c.BindJSON(&order); err != nil {
+	if err := c.BindJSON(&book); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("not:", order.Not)
+	fmt.Println("not:", book.Not)
 
-	validationErr := validate.Struct(order)
+	validationErr := validate.Struct(book)
 	if validationErr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
 		fmt.Println(validationErr)
 		return
 	}
 
-	result, err := orderCollection.UpdateOne(
+	result, err := booksCollection.UpdateOne(
 		ctx,
 		bson.M{"_id": docID},
 		bson.D{
-			{"$push", bson.M{"notes": order.Not}},
+			{"$push", bson.M{"notes": book.Not}},
 		},
 	)
 
@@ -155,17 +165,21 @@ func UpdateNotes(c *gin.Context) {
 
 	defer cancel()
 
-	c.JSON(http.StatusOK, result.ModifiedCount)
+	if result.ModifiedCount == 0 {
+		c.JSON(http.StatusInternalServerError, result.ModifiedCount)
+	} else if result.ModifiedCount == 1 {
+		c.JSON(http.StatusOK, result.ModifiedCount)
+	}
 }
 
 func DeleteBook(c *gin.Context) {
 
-	orderID := c.Params.ByName("id")
-	docID, _ := primitive.ObjectIDFromHex(orderID)
+	bookID := c.Params.ByName("id")
+	docID, _ := primitive.ObjectIDFromHex(bookID)
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
-	result, err := orderCollection.DeleteOne(ctx, bson.M{"_id": docID})
+	result, err := booksCollection.DeleteOne(ctx, bson.M{"_id": docID})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -175,6 +189,10 @@ func DeleteBook(c *gin.Context) {
 
 	defer cancel()
 
-	c.JSON(http.StatusOK, result.DeletedCount)
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusInternalServerError, result.DeletedCount)
+	} else if result.DeletedCount == 1 {
+		c.JSON(http.StatusOK, result.DeletedCount)
+	}
 
 }
